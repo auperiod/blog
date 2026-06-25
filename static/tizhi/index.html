@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>中医体质辨识测试</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#fdf8f0;--card:#fff;--text:#3d3226;--sub:#7a6e5e;--accent:#c1793a;
+  --accent2:#8b5e3c;--border:#e8dccf;--shadow:0 2px 16px rgba(0,0,0,.06);
+  --green:#6b8e5a;--red:#c96b5b;--blue:#5a7f9a;--radius:12px;
+}
+body{font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);line-height:1.7;min-height:100vh}
+.container{max-width:720px;margin:0 auto;padding:20px 16px 60px}
+header{text-align:center;padding:32px 0 24px}
+header .icon{font-size:48px;margin-bottom:8px}
+header h1{font-size:24px;color:var(--accent2);margin-bottom:4px}
+header .sub{font-size:14px;color:var(--sub)}
+
+.card{background:var(--card);border-radius:var(--radius);padding:24px;margin-bottom:16px;box-shadow:var(--shadow);border:1px solid var(--border)}
+.card h2{font-size:18px;color:var(--accent2);margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--accent)}
+.card h3{font-size:15px;color:var(--accent);margin:16px 0 8px}
+
+.question{margin-bottom:16px;padding-bottom:14px;border-bottom:1px dashed var(--border)}
+.question:last-child{border-bottom:none;margin-bottom:0}
+.question .q-text{font-size:15px;margin-bottom:10px;line-height:1.6}
+.options{display:flex;gap:6px;flex-wrap:wrap}
+.option{flex:1;min-width:54px;text-align:center;padding:8px 4px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;font-size:13px;color:var(--sub);transition:all .2s;background:#faf8f5;user-select:none}
+.option:hover{border-color:var(--accent);color:var(--accent)}
+.option.selected{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
+
+.progress-wrap{margin-bottom:20px}
+.progress-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),#d4945a);border-radius:3px;transition:width .3s}
+.progress-text{text-align:right;font-size:12px;color:var(--sub);margin-top:4px}
+
+.btn{display:inline-block;width:100%;padding:14px;border:none;border-radius:var(--radius);font-size:16px;font-weight:600;cursor:pointer;transition:all .2s;text-align:center}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent2);transform:translateY(-1px);box-shadow:0 4px 12px rgba(193,121,58,.3)}
+.btn-secondary{background:var(--card);color:var(--accent);border:2px solid var(--accent)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+.nav-btns{display:flex;gap:12px;margin-top:20px}
+
+.result-header{text-align:center;padding:20px 0}
+.result-type{font-size:36px;margin:8px 0}
+.result-name{font-size:28px;color:var(--accent2);font-weight:700}
+.result-desc{font-size:14px;color:var(--sub);margin-top:4px;line-height:1.8}
+
+.score-chart{margin:16px 0}
+.score-row{display:flex;align-items:center;margin-bottom:8px;gap:8px}
+.score-label{width:72px;text-align:right;font-size:13px;color:var(--sub);flex-shrink:0}
+.score-bar-wrap{flex:1;height:22px;background:var(--border);border-radius:4px;overflow:hidden;position:relative}
+.score-bar{height:100%;border-radius:4px;transition:width .6s ease}
+.score-value{width:42px;font-size:13px;color:var(--text);flex-shrink:0;text-align:right}
+.score-row.top .score-label{font-weight:700;color:var(--accent2)}
+.score-row.top .score-bar{background:var(--accent)}
+.score-row.top .score-value{font-weight:700;color:var(--accent2)}
+
+.advice-box{background:#fdf6ef;border-radius:var(--radius);padding:20px;margin:16px 0;border-left:4px solid var(--accent)}
+.advice-box h3{color:var(--accent2);margin-bottom:8px;font-size:16px}
+.advice-box ul{padding-left:18px;font-size:14px;line-height:2;color:var(--text)}
+.advice-box li::marker{color:var(--accent)}
+
+.share-box{text-align:center;margin-top:20px}
+.share-box p{font-size:14px;color:var(--sub);margin-bottom:8px}
+
+.footer-note{text-align:center;font-size:12px;color:var(--sub);margin-top:32px;padding-top:16px;border-top:1px solid var(--border)}
+.footer-note a{color:var(--accent);text-decoration:none}
+
+@media(max-width:480px){
+  .container{padding:12px 8px 40px}
+  .card{padding:16px}
+  header h1{font-size:20px}
+  .option{font-size:12px;padding:6px 2px}
+  .score-label{width:60px;font-size:12px}
+}
+</style>
+</head>
+<body>
+<div class="container" id="app"></div>
+
+<script>
+const CONSTITUTIONS = [
+  {
+    id:'pinghe',name:'平和质',emoji:'☯',color:'#6b8e5a',
+    questions:[
+      '您精力充沛吗？','您容易疲乏吗？','您说话声音低弱无力吗？',
+      '您感到闷闷不乐、情绪低沉吗？','您比一般人耐受不了寒冷吗？',
+      '您能适应外界自然和社会环境的变化吗？'
+    ],
+    reverse:[1,2,3,4],
+    advice:{
+      diet:'饮食宜均衡，五谷为养，五果为助，五畜为益，五菜为充。不宜偏嗜。',
+      life:'作息规律，劳逸结合。坚持适度运动，如太极拳、八段锦。',
+      acupoint:'足三里、关元、气海，可常按揉保健。'
+    }
+  },
+  {
+    id:'qixu',name:'气虚质',emoji:'😮‍💨',color:'#9ab87a',
+    questions:[
+      '您容易疲乏吗？','您容易气短（呼吸短促、接不上气）吗？',
+      '您容易心慌吗？','您容易头晕或站起时晕眩吗？',
+      '您比别人容易患感冒吗？','您喜欢安静、懒得说话吗？'
+    ],
+    reverse:[],
+    advice:{
+      diet:'多食益气健脾食物：小米、山药、土豆、香菇、鸡肉、大枣。少食耗气之品如萝卜。',
+      life:'避免过度劳累和剧烈运动。宜练习太极拳、八段锦等柔缓功法。',
+      acupoint:'气海、足三里、百会。艾灸气海效果尤佳。'
+    }
+  },
+  {
+    id:'yangxu',name:'阳虚质',emoji:'🥶',color:'#8b9dc3',
+    questions:[
+      '您手脚发凉吗？','您胃脘部、背部或腰膝部怕冷吗？',
+      '您比一般人耐受不了寒冷吗？','您比别人容易患感冒吗？',
+      '您吃（喝）凉的东西会感到不舒服或者怕吃（喝）凉的东西吗？',
+      '您受凉或吃（喝）凉的东西后，容易拉肚子吗？'
+    ],
+    reverse:[],
+    advice:{
+      diet:'多食温阳食物：羊肉、韭菜、生姜、桂圆、核桃。少食生冷寒凉之品。',
+      life:'注意保暖，尤其腰腹和足部。多晒太阳，宜在上午进行户外活动。',
+      acupoint:'关元、命门、神阙。艾灸关元、神阙效果显著。'
+    }
+  },
+  {
+    id:'yinxu',name:'阴虚质',emoji:'🔥',color:'#d4846b',
+    questions:[
+      '您感到手脚心发热吗？','您感觉身体、脸上发热吗？',
+      '您皮肤或口唇干吗？','您口唇的颜色比一般人红吗？',
+      '您容易便秘或大便干燥吗？','您面部两颧潮红或偏红吗？',
+      '您感到眼睛干涩吗？'
+    ],
+    reverse:[],
+    advice:{
+      diet:'多食滋阴食物：银耳、百合、梨、鸭肉、甲鱼、黑芝麻。忌辛辣燥热之品。',
+      life:'避免熬夜，保证充足睡眠。避免剧烈运动和大量出汗。宜静养。',
+      acupoint:'太溪、三阴交、涌泉。可按摩或针刺。'
+    }
+  },
+  {
+    id:'tanshi',name:'痰湿质',emoji:'💧',color:'#a0a0a0',
+    questions:[
+      '您感到胸闷或腹部胀满吗？','您感觉身体沉重不轻松或不爽快吗？',
+      '您腹部肥大吗？','您额头部位油脂分泌多吗？',
+      '您上眼睑比别人肿（上眼睑有轻微隆起的现象）吗？',
+      '您嘴里有黏黏的感觉吗？'
+    ],
+    reverse:[],
+    advice:{
+      diet:'多食健脾化湿食物：薏米、冬瓜、赤小豆、白扁豆、陈皮。少食肥甘厚腻。',
+      life:'加强运动，以出汗为宜。避免潮湿环境。控制体重。',
+      acupoint:'丰隆、阴陵泉、足三里。丰隆为化痰要穴。'
+    }
+  },
+  {
+    id:'shire',name:'湿热质',emoji:'💢',color:'#c9a84c',
+    questions:[
+      '您面部或鼻部有油腻感或者油亮发光吗？','您容易生痤疮或者疮疖吗？',
+      '您感到口苦或嘴里有异味吗？','您大便黏滞不爽、有解不尽的感觉吗？',
+      '您小便时感到尿道发热吗？您的带下色黄（女性）／阴囊部位潮湿（男性）吗？'
+    ],
+    reverse:[],
+    advice:{
+      diet:'多食清热利湿食物：绿豆、苦瓜、薏米、芹菜、西瓜。忌辛辣油腻、酒类。',
+      life:'保持皮肤清洁干爽。避免长时间处于潮湿环境。适当运动出汗排湿。',
+      acupoint:'曲池、阴陵泉、内庭。曲池善清湿热。'
+    }
+  },
+  {
+    id:'xueyu',name:'血瘀质',emoji:'💜',color:'#8e6b9e',
+    questions:[
+      '您的皮肤在不知不觉中会出现青紫瘀斑（皮下出血）吗？',
+      '您两颧部有细微红丝（毛细血管扩张）吗？',
+      '您身体上有哪里疼痛吗？','您面色晦暗或容易出现褐斑吗？',
+      '您容易有黑眼圈吗？','您口唇颜色偏暗吗？'
+    ],
+    reverse:[],
+    advice:{
+      diet:'多食活血化瘀食物：山楂、黑豆、黑木耳、玫瑰花茶、醋。少食肥甘厚味。',
+      life:'保持心情舒畅，多运动以促进气血运行。避免久坐久卧。',
+      acupoint:'血海、三阴交、合谷。血海为活血要穴。'
+    }
+  },
+  {
+    id:'qiyu',name:'气郁质',emoji:'😔',color:'#7eb0aa',
+    questions:[
+      '您感到闷闷不乐、情绪低沉吗？','您容易精神紧张、焦虑不安吗？',
+      '您多愁善感、感情脆弱吗？','您容易感到害怕或受到惊吓吗？',
+      '您的胁肋部或乳房胀痛吗？','您无缘无故叹气吗？'
+    ],
+    reverse:[],
+    advice:{
+      diet:'多食理气解郁食物：玫瑰花、佛手、橙子、柑橘、金橘。可饮花茶。',
+      life:'多参加社交活动，培养兴趣爱好。练习瑜伽、冥想等放松身心。',
+      acupoint:'太冲、膻中、期门。太冲疏肝理气效果显著。'
+    }
+  },
+  {
+    id:'tebing',name:'特禀质',emoji:'🤧',color:'#c49b9b',
+    questions:[
+      '您没有感冒也会打喷嚏吗？','您没有感冒也会鼻塞、流鼻涕吗？',
+      '您有因季节变化、温度变化或异味等原因而咳喘的现象吗？',
+      '您容易过敏（对药物、食物、气味、花粉）吗？',
+      '您的皮肤容易起荨麻疹吗？','您的皮肤因过敏出现过紫癜吗？'
+    ],
+    reverse:[],
+    advice:{
+      diet:'饮食宜清淡、均衡。避免已知过敏原。可适量食用黄芪、防风等益气固表之品。',
+      life:'注意防护过敏原，保持居住环境清洁通风。加强锻炼以增强体质。',
+      acupoint:'足三里、肺俞、大椎。艾灸足三里可增强免疫力。'
+    }
+  }
+];
+
+const PAGES = CONSTITUTIONS.length;
+let currentPage = 0;
+let scores = {};
+let answers = {}; // {constitutionId: [score1, score2, ...]}
+
+function init(){
+  currentPage = 0;
+  scores = {};
+  answers = {};
+  render();
+}
+
+function selectOption(conId, qIdx, val){
+  if(!answers[conId]) answers[conId] = {};
+  answers[conId][qIdx] = val;
+  // Re-render current page to update selected state
+  renderPage();
+}
+
+function calcScores(){
+  CONSTITUTIONS.forEach(c => {
+    let total = 0;
+    if(answers[c.id]){
+      Object.values(answers[c.id]).forEach(v => total += v);
+    }
+    scores[c.id] = Math.round(total / c.questions.length * 25); // normalize to 0-100
+  });
+}
+
+function getTopConstitutions(){
+  let list = CONSTITUTIONS.map(c => ({...c, score: scores[c.id] || 0}));
+  list.sort((a,b) => b.score - a.score);
+  return list;
+}
+
+function render(){
+  if(currentPage < PAGES){
+    renderPage();
+  } else {
+    renderResult();
+  }
+  window.scrollTo(0,0);
+}
+
+function renderPage(){
+  const c = CONSTITUTIONS[currentPage];
+  const progress = Math.round((currentPage / PAGES) * 100);
+
+  let qhtml = c.questions.map((q, i) => {
+    let selectedVal = answers[c.id] && answers[c.id][i] !== undefined ? answers[c.id][i] : -1;
+    let opts = ['从不','很少','有时','经常','总是'].map((label, vi) => {
+      let val = vi + 1;
+      let cls = selectedVal === val ? 'option selected' : 'option';
+      return `<div class="${cls}" onclick="selectOption('${c.id}',${i},${val})">${label}</div>`;
+    }).join('');
+    return `<div class="question"><div class="q-text">${i+1}. ${q}</div><div class="options">${opts}</div></div>`;
+  }).join('');
+
+  let allAnswered = c.questions.every((_, i) => answers[c.id] && answers[c.id][i] !== undefined);
+  let prevBtn = currentPage > 0
+    ? `<button class="btn btn-secondary" style="flex:1" onclick="prevPage()">上一步</button>`
+    : '';
+  let nextLabel = currentPage === PAGES - 1 ? '查看结果' : '下一步';
+
+  let html = `
+    <header>
+      <div class="icon">${c.emoji}</div>
+      <h1>中医体质辨识测试</h1>
+      <div class="sub">基于《中医体质分类与判定》标准</div>
+    </header>
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" style="width:${progress}%"></div></div>
+      <div class="progress-text">${currentPage + 1} / ${PAGES}</div>
+    </div>
+    <div class="card">
+      <h2>${c.name} — 测评</h2>
+      <p style="font-size:13px;color:var(--sub);margin-bottom:16px">请根据近一年的体验和感觉，回答以下问题</p>
+      ${qhtml}
+    </div>
+    <div class="nav-btns">
+      ${prevBtn}
+      <button class="btn btn-primary" style="flex:1" ${allAnswered?'':'disabled'}
+        onclick="nextPage()">${nextLabel}</button>
+    </div>
+  `;
+  document.getElementById('app').innerHTML = html;
+}
+
+function prevPage(){
+  if(currentPage > 0){ currentPage--; render(); }
+}
+function nextPage(){
+  if(currentPage < PAGES - 1){ currentPage++; render(); }
+  else { showResult(); }
+}
+
+function showResult(){
+  calcScores();
+  currentPage = PAGES;
+  render();
+}
+
+function renderResult(){
+  let list = getTopConstitutions();
+  let top = list[0];
+  let isBalanced = top.id === 'pinghe' && top.score >= 60
+    && list.slice(1).every(c => c.score < 30);
+
+  let charthtml = list.map((c, i) => {
+    let barColor = i===0 ? top.color : '#d4cbbc';
+    let rowCls = i===0 ? 'score-row top' : 'score-row';
+    return `<div class="${rowCls}">
+      <div class="score-label">${c.emoji} ${c.name}</div>
+      <div class="score-bar-wrap"><div class="score-bar" style="width:${c.score}%;background:${barColor}"></div></div>
+      <div class="score-value">${c.score}分</div>
+    </div>`;
+  }).join('');
+
+  let mainType = top;
+  let judgement = '';
+  if(mainType.id === 'pinghe' && mainType.score >= 60){
+    judgement = '您的体质类型为<strong>平和质</strong>，是一种理想的健康状态。请继续保持良好的生活习惯。';
+  } else {
+    let secondary = list[1];
+    if(secondary && secondary.score >= 40 && secondary.id !== 'pinghe'){
+      judgement = `您的主要体质类型为<strong>${mainType.name}</strong>，兼夹<strong>${secondary.name}</strong>倾向。`;
+    } else {
+      judgement = `您的主要体质类型为<strong>${mainType.name}</strong>。`;
+    }
+  }
+
+  let advice = CONSTITUTIONS.find(c => c.id === mainType.id);
+
+  let html = `
+    <header>
+      <div class="icon">📋</div>
+      <h1>您的体质辨识结果</h1>
+    </header>
+    <div class="card">
+      <div class="result-header">
+        <div class="result-type">${mainType.emoji}</div>
+        <div class="result-name">${mainType.name}</div>
+        <div class="result-desc">${judgement}</div>
+      </div>
+      <h3>体质得分</h3>
+      <div class="score-chart">${charthtml}</div>
+    </div>
+    ${mainType.id !== 'pinghe' ? `
+    <div class="card">
+      <h2>调理建议</h2>
+      <div class="advice-box">
+        <h3>饮食调理</h3>
+        <p style="font-size:14px;line-height:1.8">${advice.advice.diet}</p>
+      </div>
+      <div class="advice-box">
+        <h3>生活起居</h3>
+        <p style="font-size:14px;line-height:1.8">${advice.advice.life}</p>
+      </div>
+      <div class="advice-box">
+        <h3>穴位保健</h3>
+        <p style="font-size:14px;line-height:1.8">${advice.advice.acupoint}</p>
+      </div>
+    </div>
+    ` : ''}
+    <div class="share-box">
+      <p>分享给朋友，一起了解体质</p>
+      <button class="btn btn-primary" onclick="shareResult()">📤 分享结果</button>
+      <button class="btn btn-secondary" style="margin-top:8px" onclick="retake()">🔄 重新测试</button>
+    </div>
+    <div class="footer-note">
+      <p>本测试仅供参考，不构成医疗建议。如有健康问题，请咨询专业医师。</p>
+      <p>Powered by <a href="https://auperiod.github.io/blog/">杏林小筑</a></p>
+    </div>
+  `;
+  document.getElementById('app').innerHTML = html;
+}
+
+function shareResult(){
+  let list = getTopConstitutions();
+  let top = list[0];
+  let text = `【中医体质测试】我的体质是：${top.name}！来看看你是什么体质？`;
+  if(navigator.share){
+    navigator.share({title:'中医体质测试',text:text,url:location.href}).catch(()=>{});
+  } else {
+    let input = document.createElement('textarea');
+    input.value = text + ' ' + location.href;
+    document.body.appendChild(input);
+    input.select();
+    document.execCommand('copy');
+    document.body.removeChild(input);
+    alert('已复制分享文案，可粘贴发送给朋友！');
+  }
+}
+
+function retake(){
+  currentPage = 0;
+  scores = {};
+  answers = {};
+  render();
+}
+
+init();
+</script>
+</body>
+</html>
