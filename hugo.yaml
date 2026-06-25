@@ -1,0 +1,43 @@
+baseURL: https://auperiod.github.io/blog/
+locale: zh-cn
+title: 杏林小筑 — 中医针灸科普笔记
+theme: PaperMod
+
+params:
+  description: 分享中医针灸知识、临床心得与科研笔记
+  author: 思古守中
+  defaultTheme: light
+  ShowReadingTime: true
+  ShowShareButtons: true
+  ShowPostNavLinks: true
+  ShowBreadCrumbs: true
+  ShowCodeCopyButtons: false
+  ShowToc: true
+  TocOpen: true
+
+  homeInfoParams:
+    Title: 欢迎来到杏林小筑
+    Content: >
+      这里是**思古守中**的中医针灸科普博客。
+
+      主要分享通元针法、针灸推拿临床心得、中医经典学习笔记，
+      以及科研路上的思考。愿与同好共探中医之妙。
+
+  socialIcons:
+    - name: github
+      url: https://github.com/auperiod
+
+menu:
+  main:
+    - name: 文章
+      url: /posts/
+      weight: 10
+    - name: 分类
+      url: /categories/
+      weight: 20
+    - name: 标签
+      url: /tags/
+      weight: 30
+    - name: 关于
+      url: /about/
+      weight: 40
