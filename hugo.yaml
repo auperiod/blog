@@ -38,6 +38,9 @@ menu:
     - name: 标签
       url: /tags/
       weight: 30
+    - name: 体质测试
+      url: /tizhi/
+      weight: 40
     - name: 关于
       url: /about/
-      weight: 40
+      weight: 50
